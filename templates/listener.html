@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listener</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #4a4a8d;
+        }
+        label {
+            font-weight: bold;
+        }
+        select {
+            padding: 5px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .button-container {
+            margin: 10px 0;
+        }
+        button {
+            background-color: #4a4a8d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover:not(:disabled) {
+            background-color: #3b3b6e;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        audio {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 500px; /* Set a max-width for better appearance */
+            display: block; /* Ensure it takes up its own line */
+            margin-left: auto;
+            margin-right: auto; /* Center audio player */
+        }
+    </style>
+</head>
+<body>
+    <h1>Audio Listener</h1>
+    
+    <label for="language">Select Language:</label>
+    <select id="language">
+        <option value="">Select Language</option> <!-- Listener IDs -->
+        <option value="listener1">English</option> <!-- Listener IDs -->
+        <option value="listener2">French</option>
+        <option value="listener3">German</option>
+        <!-- Add more languages as needed -->
+    </select>
+    
+    <div class="button-container">
+        <button id="listenBtn">Start Listening</button>
+        <button id="stopBtn" disabled>Stop Listening</button>
+    </div>
+    
+    <audio id="translatedAudio" controls></audio>
+
+    <script>
+        const socket = io();
+        let listenerId;  // Declare listenerId without initial value
+        let selectedLang;
+
+        console.log('I am here');
+        console.log("Waiting for translated audio...");
+
+        // Add a listener for when the audio ends
+
+
+// Existing code inside socket.on('translated_audio', ...)
+socket.on('translated_audio', (data) => {
+    console.log("Received translated audio for listener", data.listener_id);
+    if (data.listener_id === listenerId) {
+        console.log("Audio URL received: ", data.audio_url);
+        const audioPlayer = document.getElementById('translatedAudio');
+
+        // Create a unique URL by adding a timestamp
+        const uniqueAudioUrl = `${data.audio_url}?t=${new Date().getTime()}`;
+
+        // Reset the audio source
+        audioPlayer.src = uniqueAudioUrl; // Set the new audio source
+
+        // Add a listener to check when the audio is ready to play
+        audioPlayer.oncanplaythrough = () => {
+            audioPlayer.play();
+            console.log("Playing translated audio:", uniqueAudioUrl);
+        };
+
+        // Add an event listener for when the audio ends
+        audioPlayer.onended = () => {
+            console.log("Audio playback finished.");
+
+            // Simulate a click on the 'listenBtn' to reset and get new audio
+            document.getElementById('listenBtn').click();
+        };
+
+        // Log any errors
+        audioPlayer.onerror = (error) => {
+            console.error("Error playing audio:", error);
+        };
+    } else {
+        console.log("Listener ID does not match:", listenerId, data.listener_id);
+    }
+});
+
+
+
+
+        // Listen button handler
+        document.getElementById('listenBtn').onclick = () => {
+            selectedLang = document.getElementById('language').value;
+            listenerId = selectedLang;  // Set listenerId based on the selected language
+            console.log("Listening started in language:", selectedLang);
+            
+            // Inform the server this listener has started
+            socket.emit('start_listening', { listener_id: listenerId, language: selectedLang });
+
+            console.log("Are you able to listen to the audio in language:", selectedLang, listenerId);
+        };
+    </script>
+</body>
+</html>

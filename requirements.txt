@@ -1,0 +1,7 @@
+Flask
+Flask-SocketIO
+google-cloud-speech
+google-cloud-translate
+google-cloud-texttospeech
+gTTS
+eventlet  # Needed for asynchronous WebSockets
